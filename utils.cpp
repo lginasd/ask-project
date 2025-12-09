@@ -1,14 +1,17 @@
 #include "utils.h"
 #include "boost/multiprecision/float128.hpp"
-#include <iostream>
+#include <algorithm>
 #include <string>
 
 using namespace std;
 using namespace boost::multiprecision;
 
 string binary(int n) {
-  string bits = "";
+  if (n == 0) {
+    return "0";
+  }
 
+  string bits = "";
   int current = n;
 
   while (current != 0) {
@@ -23,19 +26,13 @@ string binary(int n) {
 string fraction(float128 num, int precision) {
   string result = "";
 
-  // Gdyby użyć double to może zabraknąć precyzji i po ~52 iteracjach totalnie
-  // się psuje
-  //
-  // Niby można sprawdzić czy po jakimś czasie się nie powtarza ale mi sie nie
-  // chce
-  if (num == 0) {
-    for (int i = 0; i < precision; i++) {
-      result += "0";
-    }
+  if (precision <= 0) {
     return result;
   }
 
-  int iterations = 0;
+  if (num == 0) {
+    return string(static_cast<size_t>(precision), '0');
+  }
 
   for (int i = 0; i < precision; i++) {
     num = num * 2;
@@ -45,7 +42,6 @@ string fraction(float128 num, int precision) {
     } else {
       result += "0";
     }
-    iterations++;
   }
 
   return result;
@@ -63,12 +59,11 @@ string ieee74(float128 digit, string bits, int exp, int precision, int bias) {
   digit = abs(digit);
 
   int exponent_bits = 15;
-  int mantissa_bits = 112;
+  int mantissa_bits = precision - exponent_bits - 1;
 
-  int fraction_count = mantissa_bits - static_cast<int>(bits.length());
+  int fraction_count =
+      std::max(0, mantissa_bits - static_cast<int>(bits.length()));
   string fraction_str = fraction(digit - int(digit), fraction_count);
-
-  cout << "Fraction count: " << fraction_count << endl;
 
   int exp_decimal = bias + exp;
   string exp_str = binary(exp_decimal);
@@ -77,14 +72,14 @@ string ieee74(float128 digit, string bits, int exp, int precision, int bias) {
     exp_str = "0" + exp_str;
   }
 
-  cout << "Exponent string length: " << exp_str.length() << endl;
-  cout << "Fraction string length: " << fraction_str.length() << endl;
-
-  cout << "Bits: " << bits << endl;
-  cout << "Fraction: " << fraction_str << ", length: " << fraction_str.length()
-       << endl;
-
   string mantissa_str = bits + fraction_str;
+
+  if (static_cast<int>(mantissa_str.length()) > mantissa_bits) {
+    mantissa_str = mantissa_str.substr(0, mantissa_bits);
+  } else if (static_cast<int>(mantissa_str.length()) < mantissa_bits) {
+    mantissa_str +=
+        string(static_cast<size_t>(mantissa_bits - mantissa_str.length()), '0');
+  }
 
   return to_string(sign) + exp_str + mantissa_str;
 }

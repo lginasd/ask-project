@@ -1,6 +1,6 @@
 # Kalkulator Reprezentacji IEEE 754
 
-Ten projekt konwertuje liczby dziesiętne na ich binarną reprezentację zgodną z IEEE 754 w precyzji poczwórnej (128-bit).
+Ten projekt konwertuje liczby dziesiętne na ich binarną reprezentację zgodną z IEEE 754 w precyzji poczwórnej (128-bit) i oferuje interfejs graficzny zbudowany na Raylibie, który wizualizuje kolejne etapy konwersji.
 
 ## Funkcjonalności
 
@@ -8,6 +8,7 @@ Ten projekt konwertuje liczby dziesiętne na ich binarną reprezentację zgodną
 -   Obliczanie formatu IEEE 754 w precyzji poczwórnej (128-bit)
 -   Kolorowe oznaczenie wyniku (bit znaku na czerwono, wykładnik na niebiesko, mantysa na zielono)
 -   Wykorzystuje Boost.Multiprecision dla arytmetyki wysokiej precyzji
+-   Lekki interfejs graficzny (Raylib) z polem tekstowym, przyciskiem **Convert** oraz wizualizacją segmentów (bit znaku / wykładnik / mantysa)
 
 ## Wymagania
 
@@ -17,25 +18,26 @@ Potrzebujesz:
 
 -   Kompilatora zgodnego z C++17 (g++ 7+ lub clang++ 5+)
 -   Biblioteki Boost (konkretnie Boost.Multiprecision)
+-   Biblioteki [Raylib](https://www.raylib.com/) w wersji 4.0+ (nagłówki + biblioteki)
 -   Narzędzia `make` do budowania
 
 ### Linux (Debian/Ubuntu)
 
 ```bash
 sudo apt update
-sudo apt install build-essential libboost-all-dev libquadmath0
+sudo apt install build-essential libboost-all-dev libquadmath0 libraylib-dev
 ```
 
 ### Linux (Fedora/RHEL)
 
 ```bash
-sudo dnf install gcc-c++ boost-devel libquadmath-devel make
+sudo dnf install gcc-c++ boost-devel libquadmath-devel raylib-devel make
 ```
 
 ### Linux (Arch)
 
 ```bash
-sudo pacman -S base-devel boost
+sudo pacman -S base-devel boost raylib
 ```
 
 ### macOS
@@ -43,7 +45,7 @@ sudo pacman -S base-devel boost
 Zainstaluj Xcode Command Line Tools i Homebrew, następnie:
 
 ```bash
-brew install boost
+brew install boost raylib
 ```
 
 **Uwaga:** macOS może nie mieć `libquadmath`. Może być konieczne zmodyfikowanie Makefile i usunięcie `-lquadmath` lub zainstalowanie GCC przez Homebrew:
@@ -64,7 +66,8 @@ Następnie zaktualizuj Makefile, aby używał `g++-13` (lub Twojej wersji GCC) z
 
 1. Zainstaluj [MinGW-w64](https://www.mingw-w64.org/)
 2. Zainstaluj Boost ze źródeł lub użyj [vcpkg](https://vcpkg.io/)
-3. Zaktualizuj ścieżkę `BOOST_INCLUDE` w Makefile do Twojej instalacji Boost
+3. Zainstaluj Raylib (np. `vcpkg install raylib` albo pobierz [prekompilowane paczki](https://github.com/raysan5/raylib/releases))
+4. Zaktualizuj zmienne `BOOST_INCLUDE`, `RAYLIB_INCLUDE` oraz `RAYLIB_LIBS` w Makefile lub przekazuj je do `make` (przykład poniżej)
 
 **Opcja 3: Visual Studio**
 
@@ -92,13 +95,19 @@ ls /usr/local/include/boost/multiprecision/float128.hpp
 
 3. Jeśli Boost znajduje się w niestandardowej lokalizacji, edytuj `Makefile` i zaktualizuj ścieżkę `BOOST_INCLUDE`.
 
+4. Jeśli Raylib nie jest w standardowych ścieżkach, ustaw zmienne środowiskowe podczas kompilacji:
+
+```bash
+make RAYLIB_INCLUDE="-I/path/to/raylib/include" RAYLIB_LIBS="-L/path/to/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm"
+```
+
 ## Kompilacja
 
 ```bash
 make
 ```
 
-Lub zbuduj i uruchom od razu:
+Lub zbuduj i uruchom od razu (domyślnie uruchamia GUI):
 
 ```bash
 make run
@@ -106,32 +115,21 @@ make run
 
 ## Użycie
 
-Uruchom program i wprowadź liczbę dziesiętną:
+### Interfejs graficzny (domyślny)
 
 ```bash
 ./bin/main
 ```
 
-Przykład:
+GUI wyświetla pole tekstowe, przyciski **Convert**/**Clear** oraz panele z wizualizacją bitów. Wyniki aktualizują się natychmiast po naciśnięciu przycisku Convert.
 
-```
-$ ./bin/main
-263.3
-The binary representation of 263 is 100000111
-The exponent for base 2 is 8
-Exponent string length: 15
-Fraction string length: 104
-Bits: 00000111
-Fraction: 0100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011, length: 104
-The IEEE 754 representation is [kolorowy wynik]
-The length is: 128
+### Tryb konsolowy
+
+```bash
+./bin/main --cli
 ```
 
-Wynik pokazuje:
-
--   **Czerwony**: Bit znaku (1 bit)
--   **Niebieski**: Wykładnik (15 bitów)
--   **Zielony**: Mantysa/Ułamek (112 bitów)
+Tryb ten zachowuje dotychczasowe kolorowanie znaków w terminalu.
 
 ## Czyszczenie
 
@@ -154,6 +152,10 @@ Biblioteka quadmath nie jest dostępna. Na macOS może być konieczne usunięcie
 ### Ostrzeżenia kompilacji o nieużywanych parametrach
 
 To ostrzeżenia niekrytyczne i mogą być zignorowane. Kod będzie działał poprawnie.
+
+### "Values with |x| < 1 are not supported"
+
+Aktualna logika normalizacji obsługuje liczby, których część całkowita jest większa od zera. Dla wartości 0 < |x| < 1 aplikacja zwróci komunikat o braku wsparcia. Wymaga to osobnej implementacji normalizacji części ułamkowej.
 
 ## Struktura projektu
 

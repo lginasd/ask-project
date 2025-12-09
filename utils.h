@@ -10,7 +10,7 @@ using namespace std;
 
 string binary(int n);
 
-string fraction(float128 num);
+string fraction(float128 num, int precision);
 
 int exponent(string base);
 
