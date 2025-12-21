@@ -1,20 +1,21 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "boost/multiprecision/float128.hpp"
 #include <string>
+#include <cstddef>
 
-using namespace boost::multiprecision;
+#define BIAS 16383
 
 using namespace std;
 
-string binary(int n);
+string binary(string n);
 
-string fraction(float128 num, int precision);
+string fraction(string frac, size_t precision, int *pexpshift = nullptr);
 
 int exponent(string base);
 
-string ieee74(float128 digit, string bits, int exp, int precision,
-              int bias = 16383);
+bool isZeroesString(string n);
+bool isBinaryString(const string &n);
+bool isNumberString(const string &n);
 
 #endif
