@@ -4,15 +4,15 @@
 #include <string>
 #include <cstddef>
 
-#define BIAS 16383
-
 using namespace std;
 
 string binary(string n);
 
 string fraction(string frac, size_t precision, int *pexpshift = nullptr);
 
-int exponent(string base);
+int exponentFromInteger(string base);
+
+string Trim(const string &text);
 
 bool isZeroesString(string n);
 bool isBinaryString(const string &n);
