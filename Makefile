@@ -47,6 +47,9 @@ ifeq ($(OS),Windows_NT)
 	# CMD
 	RM = del /f /q
 	RMDIR = del /f /q /s
+else
+	RM = rm -rf
+	RMDIR = rm -rf
 endif
 
 # Default target
