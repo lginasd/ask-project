@@ -11,12 +11,15 @@
 #include <QMainWindow>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QRegExpValidator>
 #include <QString>
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <string>
 #include <vector>
+
+#define INPUT_MAX_CHARS 150
 
 namespace gui {
 
@@ -39,6 +42,13 @@ QString BuildGroupedBitLines(const string &bits, size_t bitsPerLine = 32) {
     lines.push_back(QString::fromStdString(grouped));
   }
   return lines.join("\n");
+}
+
+QString TruncateWithDots(const QString& s, int maxLength) {
+    if (s.length() <= maxLength) {
+        return s; // No need to truncate
+    }
+    return s.left(maxLength - 3) + "...";
 }
 
 QString BuildStripLabel(const ConversionResult &result) {
@@ -111,6 +121,10 @@ ConverterWindow::ConverterWindow() {
         border: 1px solid #5A8DFF;
       }
   )");
+  input_->setMaxLength(INPUT_MAX_CHARS);
+  QRegExp inputValidatorRegExp = QRegExp("^(-?)([0-9]*)([,.]?)([0-9]*)$");
+  QRegExpValidator *inputValidator = new QRegExpValidator(inputValidatorRegExp, this);
+  input_->setValidator(inputValidator);
   layout->addWidget(input_);
 
   auto *buttonRow = new QHBoxLayout();
@@ -219,6 +233,8 @@ ConverterWindow::ConverterWindow() {
           &ConverterWindow::HandleConvert);
   connect(clearBtn, &QPushButton::clicked, this,
           &ConverterWindow::HandleClear);
+  connect(input_, &QLineEdit::returnPressed, this,
+          &ConverterWindow::HandleConvert);
 
   RenderPlaceholder();
 }
@@ -244,7 +260,7 @@ void ConverterWindow::HandleClear() {
 
 void ConverterWindow::RenderResult(const ConversionResult &result) {
   QString summaryText = QString("Bity części całkowitej: %1\nWykładnik (podstawa 2): %2")
-                            .arg(QString::fromStdString(result.integerBits))
+                            .arg(TruncateWithDots(QString::fromStdString(result.integerBits), 90))
                             .arg(result.exponentValue);
   summary_->setText(summaryText);
   strip_->setText(BuildStripLabel(result));
